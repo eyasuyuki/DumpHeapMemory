@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DumpHeapMemory", "DumpHeapMemory\DumpHeapMemory.vcxproj", "{CC9CCB07-CF33-4E4A-8008-25588F56AF2B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CC9CCB07-CF33-4E4A-8008-25588F56AF2B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CC9CCB07-CF33-4E4A-8008-25588F56AF2B}.Debug|Win32.Build.0 = Debug|Win32
+		{CC9CCB07-CF33-4E4A-8008-25588F56AF2B}.Release|Win32.ActiveCfg = Release|Win32
+		{CC9CCB07-CF33-4E4A-8008-25588F56AF2B}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
