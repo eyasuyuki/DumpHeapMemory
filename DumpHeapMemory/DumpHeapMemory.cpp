@@ -6,8 +6,40 @@
 #define BUF_SIZE 4096
 #define COL_WIDTH 32
 
-void heap(int pid, int hid) {
-	HEAPENTRY32 entry;
+
+
+struct Heap
+{
+	int pid; // Process id where heaps of interest are located.
+	HANDLE process_handle; // Handle to the process whose heap is being dumped
+	HEAPENTRY32 entry; // Holds heap information.
+	HEAPLIST32 heap_list; // Heap records
+
+	void GetHeapInfo();
+	void GetHeap();
+};
+
+void Heap::GetHeapInfo()
+{
+	heap_list.dwSize = sizeof(HEAPLIST32);
+	process_handle = CreateToolhelp32Snapshot(TH32CS_SNAPALL, pid);
+	if (process_handle != NULL)
+	{
+		BOOL result = Heap32ListFirst(process_handle, &heap_list);
+		do {
+			pid = heap_list.th32ProcessID;
+			int hid = heap_list.th32HeapID;
+			int flag = heap_list.dwFlags;
+			GetHeap();
+
+		} while (Heap32ListNext(process_handle, &heap_list));
+		CloseHandle(process_handle);
+	}
+}
+
+
+void Heap::GetHeap()
+{
 	char filename[MAX_PATH];
 	char msg[BUF_SIZE];
 	unsigned char buf[BUF_SIZE];
@@ -19,12 +51,10 @@ void heap(int pid, int hid) {
 	char* a;
 
 	entry.dwSize = sizeof(HEAPENTRY32);
-
-	BOOL result = Heap32First(&entry, pid, hid);
+	BOOL result = Heap32First(&entry, pid, heap_list.th32HeapID);
 
 	if (result) {
 		sprintf(filename, "%d_%lx.dump", pid, entry.dwAddress);
-
 		file = fopen(filename, "w");
 		if (file == NULL) {
 			perror(msg);
@@ -32,49 +62,25 @@ void heap(int pid, int hid) {
 			return;
 		}
 		do {
-			ULONG_PTR addr = entry.dwAddress;
-			SIZE_T size = entry.dwBlockSize;
-
-			start = reinterpret_cast<char*>(addr);
-			for (a=start; a<(start+size); a+=BUF_SIZE) {
+			start = reinterpret_cast<char*>(entry.dwAddress);
+			for (a = start; a<(start + entry.dwBlockSize); a += BUF_SIZE) {
 				// calc bufsize
-				if ((size - len) < BUF_SIZE) bufsize = size - len;
-				else                         bufsize = BUF_SIZE;
+				if ((entry.dwBlockSize - len) < BUF_SIZE) bufsize = entry.dwBlockSize - len;
+				else
+					bufsize = BUF_SIZE;
 
-				if (!Toolhelp32ReadProcessMemory(pid, a, &buf, bufsize, &bytes)) {
+				if (!Toolhelp32ReadProcessMemory(pid, a, &buf, bufsize, &bytes)) 
+				{
 					fclose(file);
 					perror(msg);
 					fprintf(stderr, "heap: ToolHelp32ReadProcessMemory failed: %s\n", msg);
 					return;
-				}                                                                                                                                     
-
+				}
 				len += bytes;
-
 				fwrite(buf, sizeof(unsigned char), bytes, file);
 			}
-
 		} while (Heap32Next(&entry));
 		fclose(file);
-	}
-}
-void list(int pid) {
-	HANDLE h;
-	HEAPLIST32 list;
-
-	list.dwSize = sizeof(HEAPLIST32);
-
-	h = CreateToolhelp32Snapshot(TH32CS_SNAPALL, pid);
-
-	if (h != NULL) {
-		BOOL result = Heap32ListFirst(h, &list);
-		do {
-			pid = list.th32ProcessID;
-			int hid = list.th32HeapID;
-			int flag = list.dwFlags;
-			heap(pid, list.th32HeapID);
-		} while (Heap32ListNext(h, &list));
-
-		CloseHandle(h);
 	}
 }
 
@@ -86,14 +92,13 @@ void usage(_TCHAR** argv) {
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	int pid;
-	if (argc < 2) usage(argv);
-
-	pid = _tstoi(argv[1]);
-	wprintf(L"pid=%d\n", pid);                                                                                                                                    
-
-	list(pid);
-
+	if (argc < 2)
+	{
+		usage(argv);
+	}
+	Heap heap;
+	heap.pid = _tstoi(argv[1]);
+	heap.GetHeapInfo();
 	return 0;
 }
 
